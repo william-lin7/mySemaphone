@@ -61,6 +61,7 @@ void viewing(){
   printf("The story so far:\n%s", text);
   free(text);
   close(fd);
+  printf("\n");
 }
 
 void removing(){
@@ -77,20 +78,12 @@ void removing(){
   sbuffer->sem_num = 0;
   sbuffer->sem_op = -1;
   sbuffer->sem_flg = SEM_UNDO;
-  semop(semd, sbuffer, 1);
-
-  printf("Trying to get in\n");
-  sbuffer->sem_num = 0;
-  sbuffer->sem_op = -1;
+  printf("trying to get in\n");
   int i = semop(semd, sbuffer, 1);
   if (i < 0){
     printf("error: %s\n", strerror(errno));
   }
-  else{
-    printf("got the semaphore\n");
-  }
 
-  printf("trying to get in\n");
   viewing();
 
   i = semctl(semd, IPC_RMID, 0);
@@ -98,7 +91,7 @@ void removing(){
     printf("error: %s\n", strerror(errno));
   }
   else{
-    printf("semaphore removed\n");
+    printf("\nsemaphore removed\n");
   }
   i = shmctl(shmd, IPC_RMID, 0);
   if (i < 0) {
@@ -108,8 +101,10 @@ void removing(){
     printf("shared memory removed\n");
   }
 
+  free(sbuffer);
+
   remove("story.txt");
-  printf("file removed");
+  printf("file removed\n");
 }
 
 int main(int argc, char *argv[]){

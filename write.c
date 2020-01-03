@@ -10,7 +10,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#define KEY 24602
+#define KEY 24601
 
 // union semun {
 //   int              val;    /* Value for SETVAL */
@@ -21,11 +21,20 @@
 // };
 
 int main(int argc, char const *argv[]){
+  printf("trying to get in\n");
   struct sembuf *sbuffer;
   int semd, shmd;
 
   semd = semget(KEY, 1, 0);
   shmd = shmget(KEY, sizeof(int), 0644);
+
+  if (semd < 0){
+    printf("error %d: %s\n", errno, strerror(errno));
+  }
+
+  if (shmd < 0){
+    printf("error %d: %s\n", errno, strerror(errno));
+  }
 
   sbuffer = malloc(sizeof(struct sembuf));
   sbuffer->sem_num = 0;
@@ -37,15 +46,19 @@ int main(int argc, char const *argv[]){
   char * storyNow = malloc(10000);
   read(fd, storyNow, 10000);
 
-  int *lastAddition = shmat(shmd, 0, 0);
+  int * data = shmat(shmd, 0, 0);
+  int dataLen = data[0];
+  char * lastAddition = storyNow + strlen(storyNow) - dataLen;
   printf("Last Addition: %s\n", lastAddition);
 
   printf("Your Addition: ");
   char * addText = malloc(1000);
   fgets(addText, 1000, stdin);
+  strcat(addText, "\n");
   addText[strlen(addText) - 1] = '\0';
+  //addText[strlen(addText) - 2] = '\n';
   write(fd, addText, strlen(addText));
-  strcpy(storyNow, addText);
+  data[0] = strlen(addText);
 
   close(fd);
   sbuffer->sem_op = 1;
